@@ -51,6 +51,7 @@ const userName = (req, res) => {
 }
 
 const findUsers = async (req, res) => {
+  
   await friends.find({ for: req.session.email }).then((resp) => {
     res.status(200).json(resp[0])
   })
@@ -261,6 +262,13 @@ const getChats = async (req, res) => {
       return res.status(200).json(resp)
     })
 }
+const getLoginUser=async(req,res)=>{
+  await users.find({
+    email:req.session.email
+  }).then((resp)=>{
+    return res.status(200).json(resp)
+  })
+}
 export {
   chat,
   userName,
@@ -273,4 +281,5 @@ export {
   acceptFrndReq,
   rejectFrndReq,
   getChats,
+  getLoginUser
 }

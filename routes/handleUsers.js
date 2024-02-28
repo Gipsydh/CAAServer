@@ -9,19 +9,21 @@ import {
   getNotification,
   acceptFrndReq,
   rejectFrndReq,
-  getChats
+  getChats,
+  getLoginUser
 } from '../controllers/chats.js'
 const router = express.Router()
 
-router.route("/chats/getUsers").get(findUsers)
-router.route("/chats/getOneUser").post(getParticularUser)
-router.route('/chats/getSimilarUser').post(getSimilarUser)
-router.route('/chats/isFriend').post(isFriend)
-router.route("/chats/sendReq").post(sendFrndReq)
-router.route("/chats/getNotification").get(getNotification)
-router.route("/chats/acceptFrndReq").post(acceptFrndReq)
-router.route('/chats/rejectFrndReq').post(rejectFrndReq)
-router.route('/chats/getChats').post(getChats)
+router.route("/chats/getUsers").get(userLoginVerify,findUsers)
+router.route("/chats/getLoginUser").get(userLoginVerify,getLoginUser)
+router.route("/chats/getOneUser").post(userLoginVerify,getParticularUser)
+router.route('/chats/getSimilarUser').post(userLoginVerify,getSimilarUser)
+router.route('/chats/isFriend').post(userLoginVerify,isFriend)
+router.route("/chats/sendReq").post(userLoginVerify,sendFrndReq)
+router.route("/chats/getNotification").get(userLoginVerify,getNotification)
+router.route("/chats/acceptFrndReq").post(userLoginVerify,acceptFrndReq)
+router.route('/chats/rejectFrndReq').post(userLoginVerify,rejectFrndReq)
+router.route('/chats/getChats').post(userLoginVerify,getChats)
 
 
 
