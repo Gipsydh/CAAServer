@@ -24,6 +24,10 @@ const chatsSchema = new mongoose.Schema({
   chatRoomID:{
     type:String,
     required:[true,"required"]
+  },
+  chatHolders:{
+    type:Array
   }
+
 })
 export default mongoose.model('chats',chatsSchema)

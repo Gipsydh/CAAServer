@@ -1,6 +1,5 @@
 const userLoginVerify = async (req, res, next) => {
   if (req.session.email) {
-    console.log(req.session)
     next()
   } else {
     return res.status(401).json({ msg: 'unauthrized' })

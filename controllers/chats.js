@@ -41,6 +41,7 @@ const chat = async (req, res) => {
       time: dateTimeFormatted,
       status: 'S',
       chatRoomID: req.body.chatRoomID,
+      chatHolders: [req.session.email, req.body.username],
     })
     .then((resp) => {
       res.status(200).json({ msg: 'message received' })
@@ -51,7 +52,6 @@ const userName = (req, res) => {
 }
 
 const findUsers = async (req, res) => {
-  
   await friends.find({ for: req.session.email }).then((resp) => {
     res.status(200).json(resp[0])
   })
@@ -257,17 +257,54 @@ const getChats = async (req, res) => {
   await chats
     .find({
       chatRoomID: req.body.currRoomID,
+      chatHolders: { $in: [req.session.email] },
     })
     .then((resp) => {
       return res.status(200).json(resp)
     })
 }
-const getLoginUser=async(req,res)=>{
-  await users.find({
-    email:req.session.email
-  }).then((resp)=>{
-    return res.status(200).json(resp)
-  })
+const getLastChat = async (req, res) => {
+  let roomID = req.session.email
+  let tempRoomID = [roomID]
+  tempRoomID.push(req.body.username)
+  let resn = tempRoomID.sort().join('|')
+  console.log('getting name room id')
+  console.log(resn)
+  await chats
+    .find({ chatRoomID: resn, chatHolders: { $in: [req.session.email] } })
+    .then((resp) => {
+      console.log(resp[resp.length - 1])
+      return res.status(200).json(resp[resp.length - 1])
+    })
+}
+const getLoginUser = async (req, res) => {
+  await users
+    .find({
+      email: req.session.email,
+    })
+    .then((resp) => {
+      return res.status(200).json(resp)
+    })
+}
+const deleteChatFromUser = async (req, res) => {
+  console.log('chats being deleted')
+
+  await chats
+    .updateMany(
+      {
+        chatRoomID: req.body.chatRoomID,
+      },
+      {
+        $pull: { chatHolders: req.session.email },
+      }
+    )
+    .then((resp) => {
+      console.log(resp)
+      return res.status(200).json({ msg: 'deleted' })
+    })
+    .then((err) => {
+      console.log(err)
+    })
 }
 export {
   chat,
@@ -281,5 +318,7 @@ export {
   acceptFrndReq,
   rejectFrndReq,
   getChats,
-  getLoginUser
+  getLoginUser,
+  deleteChatFromUser,
+  getLastChat,
 }

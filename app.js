@@ -7,6 +7,12 @@ import handleUsers from './routes/handleUsers.js'
 import session from 'express-session'
 import { Server } from 'socket.io'
 import { createServer } from 'http'
+import {
+  onlineUsersInput,
+  onlineUsersDelete,
+  getCurrOnlineUser,
+} from './onlineUsers.js'
+import socketAuth from './middleware/socketAuth.js'
 dotenv.config()
 
 const port = 3001
@@ -29,27 +35,41 @@ app.use(
     credentials: true,
   })
 )
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+})
+app.use(sessionMiddleware)
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  })
-)
 app.use(express.json())
 
 app.use('/api/v1', login, handleUsers)
-
 //socket io codes
+io.engine.use(sessionMiddleware)
+// io.use(socketAuth)
 io.on('connection', (socket) => {
+  const session = socket.request.session.email
+  if (session) {
+    onlineUsersInput(session)
+    setTimeout(() => {
+      io.emit('online-status', getCurrOnlineUser())
+    }, 1000)
+  }
+
+  // console.log('getting session modified')
+  // console.log(session)
+
   socket.on('enter', (m) => {
-    console.log('entering room')
-    console.log(m)
+    // console.log(m)
     socket.join(m.res)
-    console.log('user joined' + m.res)
+    const req = socket.request
+    console.log("joining room")
+    req.session.reload(() => {
+      req.session.save()
+    })
+
     socket.to(m.res).emit('check-status', m.username)
-    console.log('--------')
   })
   socket.on('message', (m) => {
     m.obj.status = 'receiver'
@@ -57,7 +77,10 @@ io.on('connection', (socket) => {
     socket.to(m.target).emit('receive-msg', m.obj)
   })
   socket.on('disconnect', (m) => {
-    console.log('disconnected')
+    console.log(session + 'disconnected')
+    onlineUsersDelete(session)
+    io.emit('online-status', getCurrOnlineUser())
+
     io.emit('onDisconnect')
   })
 })
