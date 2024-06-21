@@ -12,8 +12,8 @@ import {
   getChats,
   getLoginUser,
   deleteChatFromUser,
-  getLastChat
-
+  getLastChat,
+  handleUnfriend,
 } from '../controllers/chats.js'
 const router = express.Router()
 
@@ -29,6 +29,6 @@ router.route('/chats/rejectFrndReq').post(userLoginVerify,rejectFrndReq)
 router.route('/chats/getChats').post(userLoginVerify,getChats)
 router.route('/chats/userChatDelete').post(userLoginVerify,deleteChatFromUser)
 router.route("/chats/getLastChat").post(userLoginVerify,getLastChat)
-
+router.route('/chats/userUnfriend').post(userLoginVerify, handleUnfriend)
 
 export default router

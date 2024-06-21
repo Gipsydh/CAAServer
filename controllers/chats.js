@@ -2,8 +2,16 @@ import chats from '../models/chats.js'
 import users from '../models/users.js'
 import friends from '../models/friends.js'
 import friendReqs from '../models/friendReqs.js'
+import dotenv from 'dotenv'
+
+import mongoose from 'mongoose'
+
+dotenv.config()
 const chat = async (req, res) => {
   console.log(req.body)
+  console.log(req.file)
+  
+
   // console.log(req.session.email)
   const currentDate = new Date()
 
@@ -23,16 +31,15 @@ const chat = async (req, res) => {
   const dateTimeFormatted = `${currentDateFormatted},${currentTimeFormatted}`
 
   // Display the current date and time in "date,time" format
-  const obj = {
-    text: req.body.msg,
-    sender: req.session.email,
-    receiver: req.body.username,
-    time: dateTimeFormatted,
-    status: 'S',
-    chatRoomID: req.body.chatRoomID,
-  }
+  // const obj = {
+  //   text: req.body.msg,
+  //   sender: req.session.email,
+  //   receiver: req.body.username,
+  //   time: dateTimeFormatted,
+  //   status: 'S',
+  //   chatRoomID: req.body.chatRoomID,
+  // }
 
-  console.log(obj)
   await chats
     .insertMany({
       text: req.body.msg,
@@ -40,6 +47,8 @@ const chat = async (req, res) => {
       receiver: req.body.username,
       time: dateTimeFormatted,
       status: 'S',
+      type: req.body.type,
+      content: (req.file)?req.file.filename:"no_file",
       chatRoomID: req.body.chatRoomID,
       chatHolders: [req.session.email, req.body.username],
     })
@@ -168,16 +177,24 @@ const sendFrndReq = async (req, res) => {
     } else {
       key = req.session.email + req.body.username
     }
-    await friendReqs
-      .insertMany({
-        from: req.session.email,
-        to: req.body.username,
-        date: dateTimeFormatted,
-        key: key,
-      })
-      .then((resp) => {
-        res.status(200).json({ msg: 'req sent' })
-      })
+    const resp = await friendReqs.find({
+      from: req.session.email,
+      to: req.body.username,
+    })
+    if (resp.length === 0) {
+      await friendReqs
+        .insertMany({
+          from: req.session.email,
+          to: req.body.username,
+          date: dateTimeFormatted,
+          key: key,
+        })
+        .then((resp) => {
+          res.status(200).json({ msg: 'req sent' })
+        })
+    } else {
+      res.status(200).json({ msg: 'req sent' })
+    }
   } catch (error) {}
 }
 const getNotification = async (req, res) => {
@@ -260,6 +277,11 @@ const getChats = async (req, res) => {
       chatHolders: { $in: [req.session.email] },
     })
     .then((resp) => {
+      resp.forEach(obj=>{
+        if (obj.content !== 'no_file') {
+          obj.content = `${process.env.LIVE_SERVER}/blobData/${obj.content}`
+        }
+      })
       return res.status(200).json(resp)
     })
 }
@@ -306,6 +328,39 @@ const deleteChatFromUser = async (req, res) => {
       console.log(err)
     })
 }
+const handleUnfriend = async (req, res) => {
+  try {
+    const bindSession = await mongoose.startSession()
+    const transactionOptions = {
+      readConcern: { level: 'local' },
+      writeConcern: { w: 'majority' },
+      readPreference: 'primary',
+    }
+    const transactionRes = await bindSession.withTransaction(async () => {
+      const result1 = await friends.updateOne(
+        {
+          for: req.session.email,
+        },
+        {
+          for: req.session.email,
+          $pull: { haveFrnds: req.body.username.email },
+        }
+      )
+      const result2 = await friends.updateOne(
+        {
+          for: req.body.username.email,
+        },
+        {
+          for: req.body.username.email,
+          $pull: { haveFrnds: req.session.email },
+        }
+      )
+      console.log(result1, result2)
+    }, transactionOptions)
+  } catch (error) {
+    console.log(error)
+  }
+}
 export {
   chat,
   userName,
@@ -321,4 +376,5 @@ export {
   getLoginUser,
   deleteChatFromUser,
   getLastChat,
+  handleUnfriend,
 }

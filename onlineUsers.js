@@ -1,16 +1,32 @@
 let onlineUsers = []
 
 const onlineUsersInput = (data) => {
-  onlineUsers.push(data)
+  var foundIndex = -1
+  var foundObject = onlineUsers.find(function (obj, index) {
+    if (obj["data"] === data) {
+      foundIndex = index
+    }
+  })
+  console.log('index:' + foundIndex)
+  if (foundIndex !== -1) {
+    onlineUsers[foundIndex].time = 'now'
+  } else {
+    onlineUsers.push({ data: data, time: 'now' })
+  }
   console.log(onlineUsers)
 }
 const onlineUsersDelete = (data) => {
-  let idx = onlineUsers.indexOf(data)
-  if(idx!=-1)
-  onlineUsers.splice(idx, 1)
+  var foundIndex = -1
+  var foundObject = onlineUsers.find(function (obj, index) {
+    if (obj["data"] === data) {
+      foundIndex = index
+    }
+  })
+  if (foundIndex !== -1) onlineUsers[foundIndex].time = new Date()
+  // onlineUsers.splice(idx, 1)
   console.log(onlineUsers)
 }
-const getCurrOnlineUser=()=>{
- return onlineUsers
+const getCurrOnlineUser = () => {
+  return onlineUsers
 }
 export { onlineUsersInput, onlineUsersDelete, getCurrOnlineUser }

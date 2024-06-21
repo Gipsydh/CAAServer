@@ -17,17 +17,21 @@ const chatsSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'time cannot be empty'],
   },
-  status:{
-   type:String,
-
+  status: {
+    type: String,
   },
-  chatRoomID:{
+  type: {
+    type: String,
+  },
+  content: {
     type:String,
-    required:[true,"required"]
   },
-  chatHolders:{
-    type:Array
-  }
-
+  chatRoomID: {
+    type: String,
+    required: [true, 'required'],
+  },
+  chatHolders: {
+    type: Array,
+  },
 })
-export default mongoose.model('chats',chatsSchema)
+export default mongoose.model('chats', chatsSchema)
