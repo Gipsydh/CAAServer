@@ -111,7 +111,8 @@ io.on('connection', (socket) => {
   })
   socket.on('message', (m) => {
     m.obj.status = 'receiver'
-    // console.log(m)
+    console.log("targeting")
+    console.log(m)
     socket.to(m.target).emit('receive-msg', m.obj)
   })
   socket.on('disconnect', (m) => {
@@ -123,6 +124,16 @@ io.on('connection', (socket) => {
 
     io.emit('onDisconnect')
   })
+  //socket for video chat
+  socket.on('sendcallingsignal', (m) => {
+    console.log(m)
+    socket.to(m.chatRoomID).emit('sendcallingsignal',m);
+  })
+  socket.on('answercall',(data)=>{
+    console.log(data)
+    io.to(data.chatRoomID).emit("callaccepted",data.signal)
+  })
+
 })
 
 const start = async () => {
