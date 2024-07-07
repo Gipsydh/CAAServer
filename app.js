@@ -133,6 +133,11 @@ io.on('connection', (socket) => {
     console.log(data)
     io.to(data.chatRoomID).emit("callaccepted",data.signal)
   })
+  socket.on('closeconnection',(m)=>{
+        io.to(m.chatRoomID).emit('closeconnection')
+
+  })
+
 
 })
 
