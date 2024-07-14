@@ -142,12 +142,14 @@ const getSimilarUser = async (req, res) => {
 }
 const isFriend = async (req, res) => {
   try {
+    console.log(req.session.email)
     await friends.find({ for: req.session.email }).then((resp) => {
-      if (resp[0] !== null && resp[0].haveFrnds.includes(req.body.username)) {
+      if (resp[0] !== undefined && resp[0].haveFrnds.includes(req.body.username)) {
         res.status(200).json({ friend: true })
       } else {
         res.status(200).json({ friend: false })
       }
+      // res.status(200).json({friend:false})
     })
   } catch (e) {
     console.log(e)

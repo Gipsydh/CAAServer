@@ -15,6 +15,11 @@ import {
   onlineUsersDelete,
   getCurrOnlineUser,
 } from './onlineUsers.js'
+import {
+  putOnlineVideoUsers,
+  showOnlineVideoUsers,
+  removeOnlineVideoUsers,
+} from './onlineVideoUsers.js'
 import socketAuth from './middleware/socketAuth.js'
 dotenv.config()
 
@@ -56,7 +61,6 @@ app.use(express.json())
 
 app.use('/api/v1', login, handleUsers)
 
-
 app.get('/proxy-img', async (req, res) => {
   const imageUrl = req.query.url // URL of the image to proxy
   console.log(imageUrl)
@@ -76,15 +80,12 @@ app.get('/proxy-img', async (req, res) => {
   }
 })
 
-
-
-
-
-
 //socket io codes
+const usersInRoom = new Set()
 io.engine.use(sessionMiddleware)
 // io.use(socketAuth)
 io.on('connection', (socket) => {
+  console.log('making connection')
   const session = socket.request.session.email
   if (session) {
     onlineUsersInput(session)
@@ -111,15 +112,19 @@ io.on('connection', (socket) => {
   })
   socket.on('message', (m) => {
     m.obj.status = 'receiver'
-    console.log("targeting")
+    console.log('targeting')
     console.log(m)
     socket.to(m.target).emit('receive-msg', m.obj)
   })
   socket.on('disconnect', (m) => {
+    console.log(m)
     console.log(session + 'disconnected')
     onlineUsersDelete(session)
     console.log('deleting user from the online users')
     console.log(getCurrOnlineUser())
+    removeOnlineVideoUsers(session)
+    socket.emit('closeconnection')
+
     io.emit('online-status', getCurrOnlineUser())
 
     io.emit('onDisconnect')
@@ -127,18 +132,29 @@ io.on('connection', (socket) => {
   //socket for video chat
   socket.on('sendcallingsignal', (m) => {
     console.log(m)
-    socket.to(m.chatRoomID).emit('sendcallingsignal',m);
+    if (putOnlineVideoUsers(session, m.username)) {
+      socket.to(m.chatRoomID).emit('sendcallingsignal', { m, session })
+    } else {
+      console.log('line is busy')
+      socket.emit('busyLine')
+    }
+    console.log('showing current users--')
+    showOnlineVideoUsers()
   })
-  socket.on('answercall',(data)=>{
+  socket.on('answercall', (data) => {
     console.log(data)
-    io.to(data.chatRoomID).emit("callaccepted",data.signal)
+    io.to(data.chatRoomID).emit('callaccepted', data.signal)
   })
-  socket.on('closeconnection',(m)=>{
-        io.to(m.chatRoomID).emit('closeconnection')
+  socket.on('closeconnection', (m) => {
+    io.to(m.chatRoomID).emit('closeconnection')
+    removeOnlineVideoUsers(session)
+    console.log('showing current users--')
 
+    showOnlineVideoUsers()
   })
-
-
+  socket.on('busyLine', (m) => {
+    io.to(m.chatRoomID).emit('busyLine')
+  })
 })
 
 const start = async () => {
