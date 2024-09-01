@@ -155,6 +155,11 @@ io.on('connection', (socket) => {
   socket.on('busyLine', (m) => {
     io.to(m.chatRoomID).emit('busyLine')
   })
+  socket.on('videostreamEnabled',(m)=>{
+    console.log("emmiting at backend")
+    console.log(m.chatRoomID)
+    socket.to(m.chatRoomID).emit('videostreamEnabled')
+  })
 })
 
 const start = async () => {
