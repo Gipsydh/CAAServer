@@ -9,7 +9,6 @@ import mongoose from 'mongoose'
 dotenv.config()
 const chat = async (req, res) => {
   console.log(req.body)
-  console.log(req.file)
   
 
   // console.log(req.session.email)
